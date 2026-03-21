@@ -112,12 +112,5 @@ Backend setup instructions live in [`backend/README.md`](/c:/Users/bigjo/Desktop
 
 ## Current Status
 
-This project is no longer using Supabase as its active backend path. The current direction is a local PHP/MySQL implementation under XAMPP/Apache, with tenant-aware authentication, owner oversight, patient registration, patient detail views, appointment booking, triage capture, consultation handoffs, internal workflow notifications, queued appointment SMS confirmations, billing workflows, pharmacy queues, and laboratory queues forming the first production slice.
+This project is no longer uses a local PHP/MySQL implementation under XAMPP/Apache, with tenant-aware authentication, owner oversight, patient registration, patient detail views, appointment booking, triage capture, consultation handoffs, internal workflow notifications, queued appointment SMS confirmations, billing workflows, pharmacy queues, and laboratory queues forming the first production slice.
 
-## Next Build Priorities
-
-- claims and insurance processing
-- admissions workflow and bed assignment actions
-- staff creation and editable role management
-- persistent profile/settings APIs
-- deeper audit logging and branch policy enforcement
