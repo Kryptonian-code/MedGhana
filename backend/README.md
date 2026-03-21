@@ -37,6 +37,8 @@ Override them with:
 - `HMS_SMS_PROVIDER`
 - `HMS_SMS_SENDER_ID`
 - `HMS_SMS_API_URL`
+- `BULKCLIX_API_KEY`
+- `BULKCLIX_SENDER_ID`
 
 ## Setup
 
@@ -48,16 +50,33 @@ Override them with:
 
 ## SMS Support
 
-Appointment booking queues SMS records into `sms_messages`.
+Appointment booking now attempts SMS delivery immediately after save and logs every attempt in `sms_messages`.
+Appointments also track booking/reminder SMS status directly for admin review.
 
 For simple local verification:
 
 ```bash
 set HMS_SMS_PROVIDER=log
 C:\xampp\php\php.exe backend\scripts\process_sms_queue.php
+C:\xampp\php\php.exe backend\scripts\process_appointment_reminders.php
 ```
 
-That writes queued SMS output into the PHP error log instead of sending to a live provider.
+That writes SMS output into the PHP error log instead of sending to a live provider.
+
+For BulkClix:
+
+```bash
+set HMS_SMS_ENABLED=true
+set HMS_SMS_PROVIDER=bulkclix
+set BULKCLIX_API_KEY=replace_with_real_key
+set BULKCLIX_SENDER_ID=replace_with_sender_id
+```
+
+Before using the new SMS workflow on an existing database, run:
+
+```bash
+mysql -u root hms < backend/database/migrations/20260321_add_appointment_sms_notifications.sql
+```
 
 ## Important Notes
 

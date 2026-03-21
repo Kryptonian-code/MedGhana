@@ -10,6 +10,7 @@ require_once __DIR__ . '/lib/admissions.php';
 require_once __DIR__ . '/lib/audit.php';
 require_once __DIR__ . '/lib/settings.php';
 require_once __DIR__ . '/lib/workflow.php';
+require_once __DIR__ . '/lib/sms.php';
 
 configure_cors($appConfig);
 start_api_session();

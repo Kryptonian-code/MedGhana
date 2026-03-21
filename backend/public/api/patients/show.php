@@ -33,13 +33,17 @@ $appointmentsStatement = $pdo->prepare(
     'SELECT
         a.id,
         a.patient_id,
+        a.reference_code,
         a.doctor_name,
+        a.department_name,
         a.appointment_date,
         a.appointment_time,
         a.status,
         a.type,
         a.queue_number,
         a.notes,
+        a.sms_booking_status,
+        a.sms_reminder_status,
         a.created_at
      FROM appointments a
      WHERE a.patient_id = :patient_id AND a.hospital_id = :hospital_id

@@ -97,7 +97,7 @@ export default function AdmissionsPage() {
     }
   };
 
-  const handleStatusChange = async (admission: any, status: "discharged" | "transferred") => {
+  const handleStatusChange = async (admission: AdmissionRow, status: "discharged" | "transferred") => {
     try {
       await updateAdmissionStatus(admission.id, status, new Date().toISOString().slice(0, 10));
       await loadData();

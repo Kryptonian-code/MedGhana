@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarDays, Plus, Search } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { createAppointment, listAppointments, updateAppointmentStatus, type AppointmentPayload } from "@/lib/appointmentsApi";
+import { createAppointment, listAppointments, resendAppointmentBookingSms, updateAppointmentStatus, type AppointmentPayload } from "@/lib/appointmentsApi";
 import { listPatients } from "@/lib/patientsApi";
 import { usePermissions } from "@/hooks/use-permissions";
 import type { Appointment, Patient } from "@/types";
@@ -29,10 +29,18 @@ const appointmentTypes: AppointmentPayload["type"][] = ["new_visit", "follow_up"
 const defaultForm: AppointmentPayload = {
   patient_id: 0,
   doctor_name: "",
+  department_name: "",
   appointment_date: "",
   appointment_time: "",
   type: "new_visit",
   notes: "",
+};
+
+const smsBadgeColors: Record<string, string> = {
+  pending: "bg-muted text-muted-foreground border-border",
+  sent: "bg-success/10 text-success border-success/20",
+  failed: "bg-destructive/10 text-destructive border-destructive/20",
+  skipped: "bg-warning/10 text-warning border-warning/20",
 };
 
 export default function AppointmentsPage() {
@@ -44,6 +52,7 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const [form, setForm] = useState<AppointmentPayload>(defaultForm);
 
   const loadData = async () => {
@@ -107,13 +116,16 @@ export default function AppointmentsPage() {
     setSaving(true);
 
     try {
-      await createAppointment(form);
+      const response = await createAppointment(form);
       await loadData();
       setBookOpen(false);
       setForm(defaultForm);
       toast({
         title: "Appointment booked",
-        description: "The patient has been added to the appointment queue.",
+        description:
+          response.sms_booking_status === "sent"
+            ? `Reference ${response.reference_code}. Booking SMS sent successfully.`
+            : `Reference ${response.reference_code}. Appointment saved, but SMS status is ${response.sms_booking_status}.`,
       });
     } catch (error) {
       toast({
@@ -123,6 +135,28 @@ export default function AppointmentsPage() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleResendSms = async (appointment: Appointment) => {
+    setResendingId(appointment.id);
+
+    try {
+      const response = await resendAppointmentBookingSms(appointment.id);
+      await loadData();
+      toast({
+        title: response.sms_status === "sent" ? "Booking SMS resent" : "Resend completed with issues",
+        description: response.error || `${appointment.patient_name ?? "Patient"} booking SMS status is ${response.sms_status}.`,
+        variant: response.sms_status === "sent" ? "default" : "destructive",
+      });
+    } catch (error) {
+      toast({
+        title: "Unable to resend booking SMS",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -188,6 +222,16 @@ export default function AppointmentsPage() {
                     value={form.doctor_name}
                     onChange={(event) => setForm((current) => ({ ...current, doctor_name: event.target.value }))}
                     placeholder="e.g. Dr. Nana Agyeman"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label>Department *</Label>
+                  <Input
+                    value={form.department_name}
+                    onChange={(event) => setForm((current) => ({ ...current, department_name: event.target.value }))}
+                    placeholder="e.g. Outpatient, Pediatrics, Cardiology"
                     required
                   />
                 </div>
@@ -292,6 +336,7 @@ export default function AppointmentsPage() {
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Doctor</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Date / Time</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Type</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">SMS</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Actions</th>
               </tr>
@@ -299,7 +344,7 @@ export default function AppointmentsPage() {
             <tbody>
               {!loading && filteredAppointments.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-muted-foreground">
                     No appointments found yet.
                   </td>
                 </tr>
@@ -312,21 +357,44 @@ export default function AppointmentsPage() {
                     <p className="font-medium">{appointment.patient_name}</p>
                     <p className="text-xs text-muted-foreground">{appointment.hospital_number}</p>
                   </td>
-                  <td className="px-4 py-3">{appointment.doctor_name}</td>
+                  <td className="px-4 py-3">
+                    <p>{appointment.doctor_name}</p>
+                    <p className="text-xs text-muted-foreground">{appointment.department_name || "General"}</p>
+                  </td>
                   <td className="px-4 py-3">
                     <p>{appointment.appointment_date}</p>
                     <p className="text-xs text-muted-foreground">{appointment.appointment_time}</p>
                   </td>
                   <td className="px-4 py-3 text-xs capitalize">{appointment.type.replace("_", " ")}</td>
                   <td className="px-4 py-3">
+                    <div className="space-y-2">
+                      <div>
+                        <Badge variant="outline" className={smsBadgeColors[appointment.sms_booking_status || "pending"]}>
+                          Booking {appointment.sms_booking_status || "pending"}
+                        </Badge>
+                        {appointment.sms_booking_error && <p className="mt-1 max-w-[220px] text-xs text-muted-foreground">{appointment.sms_booking_error}</p>}
+                      </div>
+                      <div>
+                        <Badge variant="outline" className={smsBadgeColors[appointment.sms_reminder_status || "pending"]}>
+                          Reminder {appointment.sms_reminder_status || "pending"}
+                        </Badge>
+                        {appointment.sms_reminder_sent_at ? (
+                          <p className="mt-1 text-xs text-muted-foreground">Sent {appointment.sms_reminder_sent_at}</p>
+                        ) : appointment.sms_reminder_due_at ? (
+                          <p className="mt-1 text-xs text-muted-foreground">Due {appointment.sms_reminder_due_at}</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
                     <Badge variant="outline" className={statusColors[appointment.status]}>
                       {appointment.status.replace("_", " ")}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
-                    {can("appointments.check_in") ? (
+                    {can("appointments.check_in") || can("appointments.create") ? (
                       <div className="flex flex-wrap gap-2">
-                        {appointment.status === "scheduled" && (
+                        {can("appointments.check_in") && appointment.status === "scheduled" && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -336,7 +404,7 @@ export default function AppointmentsPage() {
                             Check In
                           </Button>
                         )}
-                        {appointment.status === "checked_in" && (
+                        {can("appointments.check_in") && appointment.status === "checked_in" && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -346,7 +414,7 @@ export default function AppointmentsPage() {
                             Start Visit
                           </Button>
                         )}
-                        {["scheduled", "checked_in", "in_progress"].includes(appointment.status) && (
+                        {can("appointments.check_in") && ["scheduled", "checked_in", "in_progress"].includes(appointment.status) && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -354,6 +422,16 @@ export default function AppointmentsPage() {
                             onClick={() => handleStatusUpdate(appointment, "completed")}
                           >
                             Complete
+                          </Button>
+                        )}
+                        {can("appointments.create") && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={resendingId === appointment.id}
+                            onClick={() => handleResendSms(appointment)}
+                          >
+                            {resendingId === appointment.id ? "Resending..." : "Resend SMS"}
                           </Button>
                         )}
                       </div>

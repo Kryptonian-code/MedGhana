@@ -77,14 +77,26 @@ export interface Patient {
 export interface Appointment {
   id: string;
   patient_id: string;
+  reference_code?: string | null;
   doctor_id?: string;
   doctor_name?: string;
+  department_name?: string | null;
   appointment_date: string;
   appointment_time: string;
   status: 'scheduled' | 'checked_in' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
   type: 'new_visit' | 'follow_up' | 'emergency' | 'referral';
   queue_number?: number;
   notes?: string;
+  sms_booking_sent?: boolean | number;
+  sms_booking_sent_at?: string | null;
+  sms_booking_status?: 'pending' | 'sent' | 'failed' | 'skipped';
+  sms_booking_error?: string | null;
+  sms_reminder_sent?: boolean | number;
+  sms_reminder_due_at?: string | null;
+  sms_reminder_sent_at?: string | null;
+  sms_reminder_status?: 'pending' | 'sent' | 'failed' | 'skipped';
+  sms_reminder_error?: string | null;
+  bulkclix_campaign_id?: string | null;
   patient?: Patient;
   doctor?: User;
   patient_name?: string;

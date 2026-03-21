@@ -17,4 +17,7 @@ return [
     'sms_provider' => getenv('HMS_SMS_PROVIDER') ?: '',
     'sms_sender_id' => getenv('HMS_SMS_SENDER_ID') ?: '',
     'sms_api_url' => getenv('HMS_SMS_API_URL') ?: '',
+    'bulkclix_api_key' => getenv('BULKCLIX_API_KEY') ?: '',
+    'bulkclix_sender_id' => getenv('BULKCLIX_SENDER_ID') ?: '',
+    'bulkclix_api_url' => 'https://api.bulkclix.com/api/v1/sms-api/send',
 ];

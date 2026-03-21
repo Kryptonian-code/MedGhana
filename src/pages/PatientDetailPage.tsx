@@ -102,6 +102,12 @@ export default function PatientDetailPage() {
                   <div>
                     <p className="font-medium">{appointment.doctor_name || "Assigned doctor"}</p>
                     <p className="text-xs text-muted-foreground">{appointment.appointment_date} at {appointment.appointment_time}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {appointment.department_name || "General"} | Ref {appointment.reference_code || "-"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      SMS: booking {appointment.sms_booking_status || "pending"}, reminder {appointment.sms_reminder_status || "pending"}
+                    </p>
                   </div>
                   <Badge variant="outline">{appointment.status.replace("_", " ")}</Badge>
                 </div>
