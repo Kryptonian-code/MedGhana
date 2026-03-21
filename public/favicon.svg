@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MedGhana favicon">
+  <defs>
+    <linearGradient id="medghana-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1a13" />
+      <stop offset="100%" stop-color="#133524" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#medghana-bg)" />
+  <path d="M32 14c-7.4 0-14 5.6-14 14.1 0 11.7 11.1 20.4 14 21.9 2.9-1.5 14-10.2 14-21.9C46 19.6 39.4 14 32 14Z" fill="#f59e0b" opacity=".18" />
+  <path d="M23 23.5h18v6H35v6h-6v-6h-6z" fill="#f6c453" />
+  <path d="M18 30c0-8.3 6.2-14 14-14s14 5.7 14 14c0 11.7-11.1 20-14 21.5C29.1 50 18 41.7 18 30Z" fill="none" stroke="#86efac" stroke-width="3" stroke-linejoin="round" />
+</svg>
