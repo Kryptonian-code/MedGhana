@@ -1,18 +1,23 @@
-# HMS Backend
+# MedGhana Backend
 
-This backend is built for a local XAMPP/Apache + MySQL setup and serves as the foundation for MedGhana HMS. It is designed for multi-tenant hospital operations, local deployment, and role-aware access across clinical and administrative teams.
+This backend is the PHP/MySQL workflow engine behind MedGhana HMS. It is designed for XAMPP and Apache, multi-tenant hospital operations, role-aware access control, and coordinated clinical and administrative handoffs.
 
-## Included in this slice
+## What It Covers
 
-- Multi-tenant tables for hospitals, branches, users, patients, consultations, notifications, queued SMS, drugs, prescriptions, and lab orders
-- Session-based staff login endpoint
-- Owner login endpoint
-- Hospital signup endpoint
-- Current-session endpoint
-- Logout endpoint
-- Tenant-scoped patient, appointment, triage, consultation, billing, pharmacy, laboratory, dashboard, notification, and owner-overview endpoints
+- hospitals, branches, users, and sessions
+- patient registration and patient detail retrieval
+- appointments and appointment check-in
+- walk-in visit creation
+- triage recording
+- consultations with prescription and lab-order creation
+- billing and invoice payments
+- NHIS and insurance claims
+- pharmacy and laboratory queues
+- admissions and wards
+- notifications, SMS queueing, and audit logs
+- owner dashboard visibility
 
-## Default local database settings
+## Default Database Settings
 
 - Database: `hms`
 - Host: `127.0.0.1`
@@ -20,7 +25,7 @@ This backend is built for a local XAMPP/Apache + MySQL setup and serves as the f
 - User: `root`
 - Password: empty by default
 
-Override them with these environment variables if needed:
+Override them with:
 
 - `HMS_DB_HOST`
 - `HMS_DB_PORT`
@@ -35,17 +40,46 @@ Override them with these environment variables if needed:
 
 ## Setup
 
-1. Import `backend/database/schema.sql`.
-2. Serve the `backend` folder through Apache.
-3. Point the frontend `VITE_API_BASE_URL` to the `/backend/public/api` URL.
-4. Use the `/create-hospital` page in the frontend to create your first tenant, branch, and admin account.
+1. Make the project reachable through Apache, either under `htdocs` or via a virtual host.
+2. Import [`backend/database/schema.sql`](/c:/Users/bigjo/Desktop/apps/MANAGEMENT%20SYSTEMS/hms/backend/database/schema.sql) into MySQL.
+3. Ensure the frontend `VITE_API_BASE_URL` points to your Apache-served `/backend/public/api` path.
+4. Start Apache and MySQL in XAMPP.
+5. Open the frontend and use `/create-hospital` to create the first hospital tenant and admin user.
 
-## Notes
+## SMS Support
 
-- This backend no longer depends on Supabase.
-- Demo seed data has been removed so new environments start clean.
-- Authentication currently uses PHP sessions with email/password login for hospital staff, plus a dedicated owner login route for the platform owner account.
-- The owner bootstrap account is provisioned automatically as username `Joseph` with a hashed password for the requested owner dashboard flow.
-- Appointment booking now queues an SMS confirmation record in `sms_messages`; a live provider integration can be plugged in with the SMS environment variables.
-- For local verification, set `HMS_SMS_PROVIDER=log` and run `php backend/scripts/process_sms_queue.php` to process queued SMS messages into the PHP error log.
-- Workflow notifications are stored in `notifications` and are used for handoffs such as triage queue, doctor queue, pharmacy queue, laboratory queue, and billing/records follow-up.
+Appointment booking queues SMS records into `sms_messages`.
+
+For simple local verification:
+
+```bash
+set HMS_SMS_PROVIDER=log
+C:\xampp\php\php.exe backend\scripts\process_sms_queue.php
+```
+
+That writes queued SMS output into the PHP error log instead of sending to a live provider.
+
+## Important Notes
+
+- Supabase is no longer part of the active backend path.
+- Demo seed data has been removed so environments start clean.
+- Authentication uses PHP sessions.
+- The owner bootstrap account is provisioned automatically with the requested owner credentials and a hashed password.
+- Workflow notifications are stored in `notifications`.
+- Audit records are stored in `audit_logs`.
+
+## Recommended Local Verification
+
+- create hospital
+- log in as hospital staff
+- register a patient
+- confirm duplicate patient detection works
+- book appointment and check in
+- create a walk-in visit
+- record triage
+- complete consultation with prescription and lab order
+- reuse consultation data in billing
+- reuse invoice data in insurance
+- dispense prescription
+- complete lab result
+- review owner audit trail
